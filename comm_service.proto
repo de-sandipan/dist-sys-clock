@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package distributed_banking;
+
+service Communications {
+    rpc queryBalance (RequestMessage) returns (ResponseMessage) {}
+    rpc depositMoney (RequestMessage) returns (ResponseMessage) {}
+    rpc withdrawMoney (RequestMessage) returns (ResponseMessage) {}
+    rpc propagateDeposit (RequestMessage) returns (ResponseMessage) {}
+    rpc porpagateWithdraw (RequestMessage) returns (ResponseMessage) {}
+}
+
+message RequestMessage{
+    int32 brcustid = 1;
+    int32 cusreqid = 2;
+    string interface = 3;
+    int32 money = 4;
+    int32 clock = 5;
+}
+
+message ResponseMessage{
+    string interface = 1;
+    int32 balance = 2;
+    string status = 3;
+    int32 clock = 4;
+}
