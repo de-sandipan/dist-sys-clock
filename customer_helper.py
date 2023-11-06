@@ -1,4 +1,4 @@
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 from Customer import Customer
 import os
 import json
@@ -6,18 +6,15 @@ import time
 import signal
 
 
-def startCustomerProcess(customer):
+def startCustomerProcess(customer, output):
     customer.createCustomerStub()
     customer.executeEvents()
-    event_logs = json.dumps(customer.logEvents())
-    print(event_logs)
-
-    with open('output_logs.txt', 'a') as file_object:
-        file_object.write(event_logs)
-        file_object.write('\n')
-
+    event_logs = customer.logEvents()
+    output.put(event_logs)
 
 if __name__ == "__main__":
+
+    output = Queue()
 
     with open('input.json') as f:
         input_data = f.read()
@@ -34,18 +31,26 @@ if __name__ == "__main__":
 
     # Delete any previously present log files
     try:
-        os.remove('output_logs.txt')
+        os.remove('customer_event_logs.json')
     except OSError:
         pass
 
     for customer in customer_list:
-        proc = Process(target=startCustomerProcess, args=(customer,))
+        proc = Process(target=startCustomerProcess, args=(customer, output, ))
         customer_processes.append(proc)
         proc.start()
         time.sleep(0.25)
 
     for proc in customer_processes:
         proc.join()
+
+    customer_processes_log = [output.get() for p in customer_processes]
+    print(customer_processes_log)
+
+    json_object = json.dumps(customer_processes_log)
+
+    with open('customer_event_logs.json', 'w') as file_object:
+        file_object.write(json_object)
 
     # Once processing for customers are completed, read
     # p-ids form the file to terminate the branch processes

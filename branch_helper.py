@@ -58,3 +58,9 @@ if __name__ == "__main__":
         branch_processes.append(proc)
         proc.start()
         time.sleep(0.1)
+
+    for proc in branch_processes:
+        print(proc.is_alive())
+        proc.join()
+
+    print("I AM HERE")

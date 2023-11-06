@@ -53,7 +53,7 @@ class Customer:
             else:
                 pass
             
-            self.update_clock(response.clock)
+            # self.update_clock(response.clock)
 
             # Format the response from the server to display/log into file
             if event['interface'] == 'query':
