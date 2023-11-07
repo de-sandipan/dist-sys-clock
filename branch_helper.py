@@ -2,14 +2,14 @@ import json
 import grpc
 from concurrent import futures
 from Branch import Branch
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 import os
 import comm_service_pb2
 import comm_service_pb2_grpc
 import time
 
 
-def startBranchProcess(branch):
+def startBranchProcess(branch, output):
 
     # Each process writes the process id in the file. This 
     # file will be fetched when processing for all customers
@@ -27,10 +27,17 @@ def startBranchProcess(branch):
     print("Process started for branch id: " +  str(branch.id) + "; Server listening on port: " + port)
     server.wait_for_termination()
 
+    # print("End of some branch process")
+    # event_logs = branch.logEvents()
+    # print(event_logs)
+    # output.put(event_logs)
+
 
 
 
 if __name__ == "__main__":
+
+    output = Queue()
 
     with open('input.json') as f:
         input_data = f.read()
@@ -54,13 +61,23 @@ if __name__ == "__main__":
         pass
     
     for branch in branch_list:
-        proc = Process(target=startBranchProcess, args=(branch,))
+        proc = Process(target=startBranchProcess, args=(branch, output, ))
         branch_processes.append(proc)
         proc.start()
         time.sleep(0.1)
 
     for proc in branch_processes:
-        print(proc.is_alive())
         proc.join()
 
+    
     print("I AM HERE")
+
+    for branch in branch_list:
+        l = branch.logEvents()
+        print(l)
+    # branch_processes_log = [output.get() for p in branch_processes]
+
+    # json_object = json.dumps(branch_processes_log)
+
+    # with open('branch_event_logs.json', 'w') as file_object:
+    #     file_object.write(json_object)

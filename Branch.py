@@ -50,6 +50,11 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
         msg2 = f'interface: {request.interface}, comment: event_recv from customer {self.id}'
         print(msg1 + msg2)
 
+        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
+                    'interface': request.interface, 'comment': f'event_recv from customer {self.id}'}
+        
+        self.eventLogs.append(eventLog)
+
         return comm_service_pb2.ResponseMessage(interface=request.interface, balance=self.balance, status='success', clock=self.clock)
 
 
@@ -64,6 +69,13 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
         msg1 = f'branch_id: {self.id}, customer_request_id: {request.cusreqid}, logical clock: {self.clock}, '
         msg2 = f'interface: {request.interface}, comment: event_recv from customer {self.id}'
         print(msg1 + msg2)
+
+        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
+                    'interface': request.interface, 'comment': f'event_recv from customer {self.id}'}
+        
+        self.eventLogs.append(eventLog)
+
+        print(self.eventLogs)
 
         stat = 'success'
 
@@ -83,6 +95,11 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
                 msg2 = f'interface: propage_deposit, comment: event_sent to {remote_br_id}'
                 print(msg1 + msg2)
 
+                eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
+                            'interface': 'propage_deposit', 'comment': f'event_sent to {remote_br_id}'}
+        
+                self.eventLogs.append(eventLog)
+
                 stub.propagateDeposit(comm_service_pb2.RequestMessage(brcustid=self.id, cusreqid=request.cusreqid, interface=request.interface, money=request.money, clock=self.clock))
         
         return comm_service_pb2.ResponseMessage(interface=request.interface, balance=self.balance, status=stat, clock=current_clock)
@@ -99,6 +116,11 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
         msg1 = f'branch_id: {self.id}, customer_request_id: {request.cusreqid}, logical clock: {self.clock}, '
         msg2 = f'interface: {request.interface}, comment: event_recv from customer {self.id}'
         print(msg1 + msg2)
+
+        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
+                    'interface': request.interface, 'comment': f'event_recv from customer {self.id}'}
+
+        self.eventLogs.append(eventLog)
 
         stat = 'success'
 
@@ -118,6 +140,12 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
                 msg1 = f'branch_id: {self.id}, customer_request_id: {request.cusreqid}, logical clock: {self.clock}, '
                 msg2 = f'interface: propagate_withdraw, comment: event_sent to {remote_br_id}'
                 print(msg1 + msg2)
+
+                eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
+                            'interface': 'propagate_withdraw', 'comment': f'event_sent to {remote_br_id}'}
+        
+                self.eventLogs.append(eventLog)
+
                 stub.porpagateWithdraw(comm_service_pb2.RequestMessage(brcustid=self.id, cusreqid=request.cusreqid, interface=request.interface, money=request.money, clock=self.clock))
 
         return comm_service_pb2.ResponseMessage(interface=request.interface, balance=self.balance, status=stat, clock=current_clock)
@@ -132,6 +160,11 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
         msg2 = f'interface: propage_deposit, comment: event_recv from branch {request.brcustid}'
         print(msg1 + msg2)
 
+        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
+                    'interface': 'propage_deposit', 'comment': f'event_recv from branch {request.brcustid}'}
+
+        self.eventLogs.append(eventLog)
+
         return comm_service_pb2.ResponseMessage(interface=request.interface, balance=self.balance, status='success', clock=self.clock)
 
 
@@ -144,4 +177,13 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
         msg2 = f'interface: propagate_withdraw, comment: event_recv from branch {request.brcustid}'
         print(msg1 + msg2)
 
+        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
+                    'interface': 'propagate_withdraw', 'comment': f'event_recv from branch {request.brcustid}'}
+
+        self.eventLogs.append(eventLog)
+
         return comm_service_pb2.ResponseMessage(interface=request.interface, balance=self.balance, status='success', clock=self.clock)
+    
+    def logEvents(self):
+        log = {'id': self.id, 'type': 'branch', 'events': self.eventLogs}
+        return log
