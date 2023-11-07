@@ -70,8 +70,6 @@ class Customer:
     
     def logEvents(self):
         
-        # log = {'id': self.id, 'recv': self.recvMsg}
-
         log = {'id': self.id, 'type': 'customer', 'events': self.eventLogs}
 
         return log

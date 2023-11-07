@@ -45,9 +45,9 @@ if __name__ == "__main__":
         proc.join()
 
     customer_processes_log = [output.get() for p in customer_processes]
-    print(customer_processes_log)
 
-    json_object = json.dumps(customer_processes_log)
+    json_object = json.dumps(customer_processes_log, indent=2)
+    print(json_object)
 
     with open('customer_event_logs.json', 'w') as file_object:
         file_object.write(json_object)

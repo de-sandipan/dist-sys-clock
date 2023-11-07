@@ -10,24 +10,19 @@ import time
 import signal
 
 
-# def exit_handler(signum, frame):
-#     print("")
-#     print("Closing Connections.......")
-#     exit(0)
 
 class ExitHandler:
-    def __init__(self, branch):
+    def __init__(self, branch, output):
         self.branch = branch
+        self.output = output
     
     def __call__(self, signum, frame):
-        # print(branch.id)
-        # print("++++++++++++++++++++++++++++")
-        print(branch.logEvents())
+        self.output.put(branch.logEvents())
         exit(0)
 
-def startBranchProcess(branch):
+def startBranchProcess(branch, output):
 
-    signal.signal(signal.SIGTERM, ExitHandler(branch))
+    signal.signal(signal.SIGTERM, ExitHandler(branch, output))
 
 
     # Each process writes the process id in the file. This 
@@ -52,7 +47,7 @@ def startBranchProcess(branch):
 
 if __name__ == "__main__":
 
-
+    output = Queue()
 
     with open('input.json') as f:
         input_data = f.read()
@@ -72,11 +67,12 @@ if __name__ == "__main__":
     # Delete any previously present exection record
     try:
         os.remove('branch_process_ids.txt')
+        os.remove('branch_event_logs.json')
     except OSError:
         pass
     
     for branch in branch_list:
-        proc = Process(target=startBranchProcess, args=(branch, ))
+        proc = Process(target=startBranchProcess, args=(branch, output, ))
         branch_processes.append(proc)
         proc.start()
         time.sleep(0.1)
@@ -84,15 +80,11 @@ if __name__ == "__main__":
     for proc in branch_processes:
         proc.join()
 
+    branch_processes_log = [output.get() for p in branch_processes]
+
+    json_object = json.dumps(branch_processes_log, indent=2)
+    print(json_object)
+
+    with open('branch_event_logs.json', 'w') as file_object:
+        file_object.write(json_object)
     
-    # print("I AM HERE")
-
-    # for branch in branch_list:
-    #     l = branch.logEvents()
-    #     print(l)
-    # branch_processes_log = [output.get() for p in branch_processes]
-
-    # json_object = json.dumps(branch_processes_log)
-
-    # with open('branch_event_logs.json', 'w') as file_object:
-    #     file_object.write(json_object)
