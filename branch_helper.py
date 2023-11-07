@@ -7,9 +7,28 @@ import os
 import comm_service_pb2
 import comm_service_pb2_grpc
 import time
+import signal
 
 
-def startBranchProcess(branch, output):
+# def exit_handler(signum, frame):
+#     print("")
+#     print("Closing Connections.......")
+#     exit(0)
+
+class ExitHandler:
+    def __init__(self, branch):
+        self.branch = branch
+    
+    def __call__(self, signum, frame):
+        # print(branch.id)
+        # print("++++++++++++++++++++++++++++")
+        print(branch.logEvents())
+        exit(0)
+
+def startBranchProcess(branch):
+
+    signal.signal(signal.SIGTERM, ExitHandler(branch))
+
 
     # Each process writes the process id in the file. This 
     # file will be fetched when processing for all customers
@@ -27,17 +46,13 @@ def startBranchProcess(branch, output):
     print("Process started for branch id: " +  str(branch.id) + "; Server listening on port: " + port)
     server.wait_for_termination()
 
-    # print("End of some branch process")
-    # event_logs = branch.logEvents()
-    # print(event_logs)
-    # output.put(event_logs)
 
 
 
 
 if __name__ == "__main__":
 
-    output = Queue()
+
 
     with open('input.json') as f:
         input_data = f.read()
@@ -61,7 +76,7 @@ if __name__ == "__main__":
         pass
     
     for branch in branch_list:
-        proc = Process(target=startBranchProcess, args=(branch, output, ))
+        proc = Process(target=startBranchProcess, args=(branch, ))
         branch_processes.append(proc)
         proc.start()
         time.sleep(0.1)
@@ -70,11 +85,11 @@ if __name__ == "__main__":
         proc.join()
 
     
-    print("I AM HERE")
+    # print("I AM HERE")
 
-    for branch in branch_list:
-        l = branch.logEvents()
-        print(l)
+    # for branch in branch_list:
+    #     l = branch.logEvents()
+    #     print(l)
     # branch_processes_log = [output.get() for p in branch_processes]
 
     # json_object = json.dumps(branch_processes_log)

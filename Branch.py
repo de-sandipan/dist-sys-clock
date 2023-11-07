@@ -46,9 +46,9 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
 
         self.update_clock(request.clock)
 
-        msg1 = f'branch_id: {self.id}, customer_request_id: {request.cusreqid}, logical clock: {self.clock}, '
-        msg2 = f'interface: {request.interface}, comment: event_recv from customer {self.id}'
-        print(msg1 + msg2)
+        # msg1 = f'branch_id: {self.id}, customer_request_id: {request.cusreqid}, logical clock: {self.clock}, '
+        # msg2 = f'interface: {request.interface}, comment: event_recv from customer {self.id}'
+        # print(msg1 + msg2)
 
         eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
                     'interface': request.interface, 'comment': f'event_recv from customer {self.id}'}
@@ -66,16 +66,16 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
         self.update_clock(request.clock)
         current_clock = self.clock
 
-        msg1 = f'branch_id: {self.id}, customer_request_id: {request.cusreqid}, logical clock: {self.clock}, '
-        msg2 = f'interface: {request.interface}, comment: event_recv from customer {self.id}'
-        print(msg1 + msg2)
+        # msg1 = f'branch_id: {self.id}, customer_request_id: {request.cusreqid}, logical clock: {self.clock}, '
+        # msg2 = f'interface: {request.interface}, comment: event_recv from customer {self.id}'
+        # print(msg1 + msg2)
 
         eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
                     'interface': request.interface, 'comment': f'event_recv from customer {self.id}'}
         
         self.eventLogs.append(eventLog)
 
-        print(self.eventLogs)
+        # print(self.eventLogs)
 
         stat = 'success'
 
@@ -91,9 +91,9 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
                 
                 self.increment_clock()
 
-                msg1 = f'branch_id: {self.id}, customer_request_id: {request.cusreqid}, logical clock: {self.clock}, '
-                msg2 = f'interface: propage_deposit, comment: event_sent to {remote_br_id}'
-                print(msg1 + msg2)
+                # msg1 = f'branch_id: {self.id}, customer_request_id: {request.cusreqid}, logical clock: {self.clock}, '
+                # msg2 = f'interface: propage_deposit, comment: event_sent to {remote_br_id}'
+                # print(msg1 + msg2)
 
                 eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
                             'interface': 'propage_deposit', 'comment': f'event_sent to {remote_br_id}'}
@@ -113,9 +113,9 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
         self.update_clock(request.clock)
         current_clock = self.clock
 
-        msg1 = f'branch_id: {self.id}, customer_request_id: {request.cusreqid}, logical clock: {self.clock}, '
-        msg2 = f'interface: {request.interface}, comment: event_recv from customer {self.id}'
-        print(msg1 + msg2)
+        # msg1 = f'branch_id: {self.id}, customer_request_id: {request.cusreqid}, logical clock: {self.clock}, '
+        # msg2 = f'interface: {request.interface}, comment: event_recv from customer {self.id}'
+        # print(msg1 + msg2)
 
         eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
                     'interface': request.interface, 'comment': f'event_recv from customer {self.id}'}
@@ -137,9 +137,9 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
             for (remote_br_id, stub) in self.stubList.items():
                 
                 self.increment_clock()
-                msg1 = f'branch_id: {self.id}, customer_request_id: {request.cusreqid}, logical clock: {self.clock}, '
-                msg2 = f'interface: propagate_withdraw, comment: event_sent to {remote_br_id}'
-                print(msg1 + msg2)
+                # msg1 = f'branch_id: {self.id}, customer_request_id: {request.cusreqid}, logical clock: {self.clock}, '
+                # msg2 = f'interface: propagate_withdraw, comment: event_sent to {remote_br_id}'
+                # print(msg1 + msg2)
 
                 eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
                             'interface': 'propagate_withdraw', 'comment': f'event_sent to {remote_br_id}'}
@@ -156,9 +156,9 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
 
         self.update_clock(request.clock)
 
-        msg1 = f'branch_id: {self.id}, customer_request_id: {request.cusreqid}, logical clock: {self.clock}, '
-        msg2 = f'interface: propage_deposit, comment: event_recv from branch {request.brcustid}'
-        print(msg1 + msg2)
+        # msg1 = f'branch_id: {self.id}, customer_request_id: {request.cusreqid}, logical clock: {self.clock}, '
+        # msg2 = f'interface: propage_deposit, comment: event_recv from branch {request.brcustid}'
+        # print(msg1 + msg2)
 
         eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
                     'interface': 'propage_deposit', 'comment': f'event_recv from branch {request.brcustid}'}
@@ -173,9 +173,9 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
 
         self.update_clock(request.clock)
 
-        msg1 = f'branch_id: {self.id}, customer_request_id: {request.cusreqid}, logical clock: {self.clock}, '
-        msg2 = f'interface: propagate_withdraw, comment: event_recv from branch {request.brcustid}'
-        print(msg1 + msg2)
+        # msg1 = f'branch_id: {self.id}, customer_request_id: {request.cusreqid}, logical clock: {self.clock}, '
+        # msg2 = f'interface: propagate_withdraw, comment: event_recv from branch {request.brcustid}'
+        # print(msg1 + msg2)
 
         eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
                     'interface': 'propagate_withdraw', 'comment': f'event_recv from branch {request.brcustid}'}
