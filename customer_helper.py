@@ -39,7 +39,7 @@ if __name__ == "__main__":
         proc = Process(target=startCustomerProcess, args=(customer, output, ))
         customer_processes.append(proc)
         proc.start()
-        time.sleep(0.25)
+        # time.sleep(0.25)
 
     for proc in customer_processes:
         proc.join()

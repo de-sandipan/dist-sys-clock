@@ -75,7 +75,7 @@ if __name__ == "__main__":
         proc = Process(target=startBranchProcess, args=(branch, output, ))
         branch_processes.append(proc)
         proc.start()
-        time.sleep(0.1)
+        # time.sleep(0.1)
 
     for proc in branch_processes:
         proc.join()

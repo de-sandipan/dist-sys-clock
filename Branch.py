@@ -1,6 +1,7 @@
 import grpc
 import comm_service_pb2
 import comm_service_pb2_grpc
+from multiprocessing import Lock
 
 class Branch(comm_service_pb2_grpc.CommunicationsServicer):
 
@@ -21,6 +22,8 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
         self.clock = 0
         self.eventLogs = list()
 
+        self.lock = Lock()
+
 
     def createBranchStub(self):
         for br_id in self.branches:
@@ -33,25 +36,37 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
                 self.stubList[br_id] = stub
 
     def increment_clock(self):
-        self.clock += 1
+        try:
+            self.lock.acquire()
+            self.clock += 1
+            current_clock = self.clock
+        finally:
+            self.lock.release()
+        return current_clock
 
     def update_clock(self, remote_clock):
-        self.clock = max(self.clock, remote_clock)
-        self.clock += 1
+        try:
+            self.lock.acquire()
+            self.clock = max(self.clock, remote_clock)
+            self.clock += 1
+            current_clock = self.clock
+        finally:
+            self.lock.release()
+        return current_clock
 
     def queryBalance(self, request, context):
         # Log incomming requests
         recvReq = {'customer_request_id': request.cusreqid, 'interface': request.interface, 'money': request.money}
         self.recvMsg.append(recvReq)
 
-        self.update_clock(request.clock)
+        current_clock = self.update_clock(request.clock)
 
-        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
+        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': current_clock, 
                     'interface': request.interface, 'comment': f'event_recv from customer {self.id}'}
         
         self.eventLogs.append(eventLog)
 
-        return comm_service_pb2.ResponseMessage(interface=request.interface, balance=self.balance, status='success', clock=self.clock)
+        return comm_service_pb2.ResponseMessage(interface=request.interface, balance=self.balance, status='success', clock=current_clock)
 
 
     def depositMoney(self, request, context):
@@ -59,10 +74,9 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
         recvReq = {'customer_request_id': request.cusreqid, 'interface': request.interface, 'money': request.money}
         self.recvMsg.append(recvReq)
 
-        self.update_clock(request.clock)
-        current_clock = self.clock
+        current_clock = self.update_clock(request.clock)
 
-        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
+        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': current_clock, 
                     'interface': request.interface, 'comment': f'event_recv from customer {self.id}'}
         
         self.eventLogs.append(eventLog)
@@ -81,14 +95,14 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
             # for stub in self.stubList:
             for (remote_br_id, stub) in self.stubList.items():
                 
-                self.increment_clock()
+                incr_current_clock = self.increment_clock()
 
-                eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
+                eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': incr_current_clock, 
                             'interface': 'propage_deposit', 'comment': f'event_sent to {remote_br_id}'}
         
                 self.eventLogs.append(eventLog)
 
-                stub.propagateDeposit(comm_service_pb2.RequestMessage(brcustid=self.id, cusreqid=request.cusreqid, interface=request.interface, money=request.money, clock=self.clock))
+                stub.propagateDeposit(comm_service_pb2.RequestMessage(brcustid=self.id, cusreqid=request.cusreqid, interface=request.interface, money=request.money, clock=incr_current_clock))
         
         return comm_service_pb2.ResponseMessage(interface=request.interface, balance=self.balance, status=stat, clock=current_clock)
 
@@ -98,10 +112,9 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
         recvReq = {'customer_request_id': request.cusreqid, 'interface': request.interface, 'money': request.money}
         self.recvMsg.append(recvReq)
 
-        self.update_clock(request.clock)
-        current_clock = self.clock
+        current_clock = self.update_clock(request.clock)
 
-        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
+        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': current_clock, 
                     'interface': request.interface, 'comment': f'event_recv from customer {self.id}'}
 
         self.eventLogs.append(eventLog)
@@ -120,14 +133,14 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
             # for stub in self.stubList:
             for (remote_br_id, stub) in self.stubList.items():
                 
-                self.increment_clock()
+                incr_current_clock = self.increment_clock()
 
-                eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
+                eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': incr_current_clock, 
                             'interface': 'propagate_withdraw', 'comment': f'event_sent to {remote_br_id}'}
         
                 self.eventLogs.append(eventLog)
 
-                stub.porpagateWithdraw(comm_service_pb2.RequestMessage(brcustid=self.id, cusreqid=request.cusreqid, interface=request.interface, money=request.money, clock=self.clock))
+                stub.porpagateWithdraw(comm_service_pb2.RequestMessage(brcustid=self.id, cusreqid=request.cusreqid, interface=request.interface, money=request.money, clock=incr_current_clock))
 
         return comm_service_pb2.ResponseMessage(interface=request.interface, balance=self.balance, status=stat, clock=current_clock)
             
@@ -136,28 +149,28 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
 
         self.balance += request.money
 
-        self.update_clock(request.clock)
+        current_clock = self.update_clock(request.clock)
 
-        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
+        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': current_clock, 
                     'interface': 'propage_deposit', 'comment': f'event_recv from branch {request.brcustid}'}
 
         self.eventLogs.append(eventLog)
 
-        return comm_service_pb2.ResponseMessage(interface=request.interface, balance=self.balance, status='success', clock=self.clock)
+        return comm_service_pb2.ResponseMessage(interface=request.interface, balance=self.balance, status='success', clock=current_clock)
 
 
     def porpagateWithdraw(self, request, context):
 
         self.balance -= request.money
 
-        self.update_clock(request.clock)
+        current_clock = self.update_clock(request.clock)
 
-        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': self.clock, 
+        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': current_clock, 
                     'interface': 'propagate_withdraw', 'comment': f'event_recv from branch {request.brcustid}'}
 
         self.eventLogs.append(eventLog)
 
-        return comm_service_pb2.ResponseMessage(interface=request.interface, balance=self.balance, status='success', clock=self.clock)
+        return comm_service_pb2.ResponseMessage(interface=request.interface, balance=self.balance, status='success', clock=current_clock)
     
     def logEvents(self):
 

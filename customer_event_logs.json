@@ -1,23 +1,5 @@
 [
   {
-    "id": 1,
-    "type": "customer",
-    "events": [
-      {
-        "customer-request-id": 1,
-        "logical-clock": 1,
-        "interface": "deposit",
-        "comment": "event sent from customer 1"
-      },
-      {
-        "customer-request-id": 2,
-        "logical-clock": 2,
-        "interface": "withdraw",
-        "comment": "event sent from customer 1"
-      }
-    ]
-  },
-  {
     "id": 2,
     "type": "customer",
     "events": [
@@ -50,6 +32,24 @@
         "logical-clock": 2,
         "interface": "withdraw",
         "comment": "event sent from customer 3"
+      }
+    ]
+  },
+  {
+    "id": 1,
+    "type": "customer",
+    "events": [
+      {
+        "customer-request-id": 1,
+        "logical-clock": 1,
+        "interface": "deposit",
+        "comment": "event sent from customer 1"
+      },
+      {
+        "customer-request-id": 2,
+        "logical-clock": 2,
+        "interface": "withdraw",
+        "comment": "event sent from customer 1"
       }
     ]
   }
