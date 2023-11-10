@@ -2,14 +2,14 @@
     {
         "id": 1,
         "type": "customer",
-        "events": [
+        "customer-requests": [
             {
-                "id": 1,
+                "customer-request-id": 1,
                 "interface": "deposit",
                 "money": 10
             },
             {
-                "id": 2,
+                "customer-request-id": 2,
                 "interface": "withdraw",
                 "money": 10
             }
@@ -18,14 +18,14 @@
     {
         "id": 2,
         "type": "customer",
-        "events": [
+        "customer-requests": [
             {
-                "id": 3,
+                "customer-request-id": 3,
                 "interface": "deposit",
                 "money": 10
             },
             {
-                "id": 4,
+                "customer-request-id": 4,
                 "interface": "withdraw",
                 "money": 10
             }
@@ -34,14 +34,14 @@
     {
         "id": 3,
         "type": "customer",
-        "events": [
+        "customer-requests": [
             {
-                "id": 5,
+                "customer-request-id": 5,
                 "interface": "deposit",
                 "money": 10
             },
             {
-                "id": 6,
+                "customer-request-id": 6,
                 "interface": "withdraw",
                 "money": 10
             }

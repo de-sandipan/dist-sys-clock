@@ -1,6 +1,8 @@
 import grpc
 import comm_service_pb2
 import comm_service_pb2_grpc
+import json
+from filelock import FileLock
 
 class Customer:
     def __init__(self, id, events):
@@ -33,22 +35,24 @@ class Customer:
 
             self.increment_clock()
 
-            eventLog = {'customer-request-id': event['id'], 'logical-clock': self.clock, 
+            eventLog = {'customer-request-id': event['customer-request-id'], 'logical_clock': self.clock, 
                           'interface': event['interface'], 'comment': f'event sent from customer {self.id}'}
             
             self.eventLogs.append(eventLog)
 
+            self.writeEventIntoFile(eventLog)
+
             if event['interface'] == 'query':
                 response = self.stub.queryBalance(comm_service_pb2.RequestMessage(
-                    brcustid = self.id, cusreqid=event['id'], interface=event['interface'], money=0, clock=self.clock))
+                    brcustid = self.id, cusreqid=event['customer-request-id'], interface=event['interface'], money=0, clock=self.clock))
                 
             elif event['interface'] == 'deposit':
                 response = self.stub.depositMoney(comm_service_pb2.RequestMessage(
-                    brcustid = self.id, cusreqid=event['id'], interface=event['interface'], money=0, clock=self.clock))
+                    brcustid = self.id, cusreqid=event['customer-request-id'], interface=event['interface'], money=0, clock=self.clock))
                 
             elif event['interface'] == 'withdraw':
                 response = self.stub.withdrawMoney(comm_service_pb2.RequestMessage(
-                    brcustid = self.id, cusreqid=event['id'], interface=event['interface'], money=0, clock=self.clock))
+                    brcustid = self.id, cusreqid=event['customer-request-id'], interface=event['interface'], money=0, clock=self.clock))
             
             else:
                 pass
@@ -73,3 +77,35 @@ class Customer:
         log = {'id': self.id, 'type': 'customer', 'events': self.eventLogs}
 
         return log
+
+    def writeEventIntoFile(self, eventLog):
+        file_record = {'id': self.id, 
+                       'customer-request-id': eventLog['customer-request-id'], 
+                       'type': 'customer', 
+                       'logical_clock': eventLog['logical_clock'], 
+                       'interface': eventLog['interface'], 
+                       'comment': eventLog['comment']}
+        
+        # json_object = json.dumps([file_record], indent=2)
+        
+        lock = FileLock("all_event_logs.json.lock")
+
+        # with lock:
+        #     with open('all_event_logs.json', 'a') as file_object:
+        #         file_object.write(json_object)
+        
+        with lock:
+            with open('all_event_logs.json', 'r') as file_object:
+                file_data = file_object.read()
+                if len(file_data) > 0:
+                    data = json.loads(file_data)
+                else:
+                    data = []
+            
+            data.append(file_record)
+
+            with open('all_event_logs.json', 'w') as file_object:
+                json_object = json.dumps(data, indent=2)
+                file_object.write(json_object)
+
+

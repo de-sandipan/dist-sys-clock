@@ -2,6 +2,8 @@ import grpc
 import comm_service_pb2
 import comm_service_pb2_grpc
 from multiprocessing import Lock
+from filelock import FileLock
+import json
 
 class Branch(comm_service_pb2_grpc.CommunicationsServicer):
 
@@ -56,30 +58,34 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
 
     def queryBalance(self, request, context):
         # Log incomming requests
-        recvReq = {'customer_request_id': request.cusreqid, 'interface': request.interface, 'money': request.money}
+        recvReq = {'customer-request-id': request.cusreqid, 'interface': request.interface, 'money': request.money}
         self.recvMsg.append(recvReq)
 
         current_clock = self.update_clock(request.clock)
 
-        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': current_clock, 
+        eventLog = {'customer-request-id': request.cusreqid, 'logical_clock': current_clock, 
                     'interface': request.interface, 'comment': f'event_recv from customer {self.id}'}
         
         self.eventLogs.append(eventLog)
+
+        self.writeEventIntoFile(eventLog)
 
         return comm_service_pb2.ResponseMessage(interface=request.interface, balance=self.balance, status='success', clock=current_clock)
 
 
     def depositMoney(self, request, context):
         # Log incomming requests
-        recvReq = {'customer_request_id': request.cusreqid, 'interface': request.interface, 'money': request.money}
+        recvReq = {'customer-request-id': request.cusreqid, 'interface': request.interface, 'money': request.money}
         self.recvMsg.append(recvReq)
 
         current_clock = self.update_clock(request.clock)
 
-        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': current_clock, 
+        eventLog = {'customer-request-id': request.cusreqid, 'logical_clock': current_clock, 
                     'interface': request.interface, 'comment': f'event_recv from customer {self.id}'}
         
         self.eventLogs.append(eventLog)
+
+        self.writeEventIntoFile(eventLog)
 
         # print(self.eventLogs)
 
@@ -97,10 +103,12 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
                 
                 incr_current_clock = self.increment_clock()
 
-                eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': incr_current_clock, 
+                eventLog = {'customer-request-id': request.cusreqid, 'logical_clock': incr_current_clock, 
                             'interface': 'propage_deposit', 'comment': f'event_sent to {remote_br_id}'}
         
                 self.eventLogs.append(eventLog)
+
+                self.writeEventIntoFile(eventLog)
 
                 stub.propagateDeposit(comm_service_pb2.RequestMessage(brcustid=self.id, cusreqid=request.cusreqid, interface=request.interface, money=request.money, clock=incr_current_clock))
         
@@ -109,15 +117,17 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
 
     def withdrawMoney(self, request, context):
         # Log incomming requests
-        recvReq = {'customer_request_id': request.cusreqid, 'interface': request.interface, 'money': request.money}
+        recvReq = {'customer-request-id': request.cusreqid, 'interface': request.interface, 'money': request.money}
         self.recvMsg.append(recvReq)
 
         current_clock = self.update_clock(request.clock)
 
-        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': current_clock, 
+        eventLog = {'customer-request-id': request.cusreqid, 'logical_clock': current_clock, 
                     'interface': request.interface, 'comment': f'event_recv from customer {self.id}'}
 
         self.eventLogs.append(eventLog)
+
+        self.writeEventIntoFile(eventLog)
 
         stat = 'success'
 
@@ -135,10 +145,12 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
                 
                 incr_current_clock = self.increment_clock()
 
-                eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': incr_current_clock, 
+                eventLog = {'customer-request-id': request.cusreqid, 'logical_clock': incr_current_clock, 
                             'interface': 'propagate_withdraw', 'comment': f'event_sent to {remote_br_id}'}
         
                 self.eventLogs.append(eventLog)
+
+                self.writeEventIntoFile(eventLog)
 
                 stub.porpagateWithdraw(comm_service_pb2.RequestMessage(brcustid=self.id, cusreqid=request.cusreqid, interface=request.interface, money=request.money, clock=incr_current_clock))
 
@@ -151,10 +163,12 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
 
         current_clock = self.update_clock(request.clock)
 
-        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': current_clock, 
+        eventLog = {'customer-request-id': request.cusreqid, 'logical_clock': current_clock, 
                     'interface': 'propage_deposit', 'comment': f'event_recv from branch {request.brcustid}'}
 
         self.eventLogs.append(eventLog)
+
+        self.writeEventIntoFile(eventLog)
 
         return comm_service_pb2.ResponseMessage(interface=request.interface, balance=self.balance, status='success', clock=current_clock)
 
@@ -165,10 +179,12 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
 
         current_clock = self.update_clock(request.clock)
 
-        eventLog = {'customer_request_id': request.cusreqid, 'logical_clock': current_clock, 
+        eventLog = {'customer-request-id': request.cusreqid, 'logical_clock': current_clock, 
                     'interface': 'propagate_withdraw', 'comment': f'event_recv from branch {request.brcustid}'}
 
         self.eventLogs.append(eventLog)
+
+        self.writeEventIntoFile(eventLog)
 
         return comm_service_pb2.ResponseMessage(interface=request.interface, balance=self.balance, status='success', clock=current_clock)
     
@@ -176,3 +192,34 @@ class Branch(comm_service_pb2_grpc.CommunicationsServicer):
 
         log = {'id': self.id, 'type': 'branch', 'events': self.eventLogs}
         return log
+    
+
+    def writeEventIntoFile(self, eventLog):
+        file_record = {'id': self.id, 
+                       'customer-request-id': eventLog['customer-request-id'], 
+                       'type': 'branch', 
+                       'logical_clock': eventLog['logical_clock'], 
+                       'interface': eventLog['interface'], 
+                       'comment': eventLog['comment']}
+        
+        # json_object = json.dumps([file_record], indent=2)
+        
+        lock = FileLock("all_event_logs.json.lock")
+
+        # with lock:
+        #     with open('all_event_logs.json', 'a') as file_object:
+        #         file_object.write(json_object)
+        
+        with lock:
+            with open('all_event_logs.json', 'r') as file_object:
+                file_data = file_object.read()
+                if len(file_data) > 0:
+                    data = json.loads(file_data)
+                else:
+                    data = []
+            
+            data.append(file_record)
+
+            with open('all_event_logs.json', 'w') as file_object:
+                json_object = json.dumps(data, indent=2)
+                file_object.write(json_object)

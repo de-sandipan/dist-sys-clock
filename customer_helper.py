@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     for record in parsed_input_data:
         if record['type'] == 'customer':
-            customer = Customer(record['id'],record['events'])
+            customer = Customer(record['id'],record['customer-requests'])
             customer_list.append(customer)
 
     # Delete any previously present log files
