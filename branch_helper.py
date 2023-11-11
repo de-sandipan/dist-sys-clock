@@ -9,6 +9,7 @@ import comm_service_pb2_grpc
 import signal
 import distro
 import platform
+import sys
 
 
 class ExitHandler:
@@ -57,16 +58,36 @@ if __name__ == "__main__":
               ''')
         exit(0)
 
-    if distro.name() != 'Ubuntu' and distro.version() != '22.04':
+    if distro.name() != 'Ubuntu' or distro.version() != '22.04':
         print('''
               This application is tested on Ubuntu 22.04.
               Execution in other platforms may produce unintended outputs.
               ''')
 
+    if len(sys.argv) < 2:
+        print("Pease provide input file name")
+        exit(0)
+    
+    file_name = sys.argv[1]
+
+
     # This data structure will capture events generated for all branches
     output = Queue()
 
-    with open('input.json') as f:
+    # Delete any files generated in previous execution
+    try:
+        os.remove('branch_process_ids.txt')
+        os.remove('branch_event_logs.json')
+        os.remove('all_event_logs.json')
+    except OSError:
+        pass
+    
+    # Create a clean file for all events as both branch and customer
+    # processes first read the file and then writes into it
+    with open('all_event_logs.json', 'w') as f:
+        pass
+
+    with open(file_name, 'r') as f:
         input_data = f.read()
 
     parsed_input_data = json.loads(input_data)
@@ -81,13 +102,7 @@ if __name__ == "__main__":
             branches.append(branch.id)
             branch_list.append(branch)
 
-    # Delete any files generated in previous execution
-    try:
-        os.remove('branch_process_ids.txt')
-        os.remove('branch_event_logs.json')
-        os.remove('all_event_logs.json')
-    except OSError:
-        pass
+
     
     for branch in branch_list:
         proc = Process(target=startBranchProcess, args=(branch, output, ))

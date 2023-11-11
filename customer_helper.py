@@ -5,6 +5,7 @@ import json
 import signal
 import platform
 import distro
+import sys
 
 
 def startCustomerProcess(customer, output):
@@ -28,10 +29,22 @@ if __name__ == "__main__":
               Execution in other platforms may produce unintended outputs.
               ''')
 
+    if len(sys.argv) < 2:
+        print("Pease provide input file name")
+        exit(0)
+    
+    file_name = sys.argv[1]
+
     # This data structure will capture events generated for all customers
     output = Queue()
 
-    with open('input.json') as f:
+    # Delete any files generated in previous execution
+    try:
+        os.remove('customer_event_logs.json')
+    except OSError:
+        pass
+
+    with open(file_name, 'r') as f:
         input_data = f.read()
     
     parsed_input_data = json.loads(input_data)
@@ -43,12 +56,6 @@ if __name__ == "__main__":
         if record['type'] == 'customer':
             customer = Customer(record['id'],record['customer-requests'])
             customer_list.append(customer)
-
-    # Delete any files generated in previous execution
-    try:
-        os.remove('customer_event_logs.json')
-    except OSError:
-        pass
 
     for customer in customer_list:
         proc = Process(target=startCustomerProcess, args=(customer, output, ))
