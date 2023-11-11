@@ -23,7 +23,7 @@ if __name__ == "__main__":
               ''')
         exit(0)
 
-    if distro.name() != 'Ubuntu' and distro.version() != '22.04':
+    if distro.name() != 'Ubuntu' or distro.version() != '22.04':
         print('''
               This application is tested on Ubuntu 22.04.
               Execution in other platforms may produce unintended outputs.
