@@ -2,8 +2,9 @@ from multiprocessing import Process, Queue
 from Customer import Customer
 import os
 import json
-import time
 import signal
+import platform
+import distro
 
 
 def startCustomerProcess(customer, output):
@@ -14,6 +15,20 @@ def startCustomerProcess(customer, output):
 
 if __name__ == "__main__":
 
+    if platform.system() == 'Windows':
+        print('''
+              This application is not cross platform and can not be executed on
+              Windows. Please use a Linux based platform, preferably Ubuntu 22.04.
+              ''')
+        exit(0)
+
+    if distro.name() != 'Ubuntu' and distro.version() != '22.04':
+        print('''
+              This application is tested on Ubuntu 22.04.
+              Execution in other platforms may produce unintended outputs.
+              ''')
+
+    # This data structure will capture events generated for all customers
     output = Queue()
 
     with open('input.json') as f:
@@ -29,7 +44,7 @@ if __name__ == "__main__":
             customer = Customer(record['id'],record['customer-requests'])
             customer_list.append(customer)
 
-    # Delete any previously present log files
+    # Delete any files generated in previous execution
     try:
         os.remove('customer_event_logs.json')
     except OSError:
@@ -39,7 +54,6 @@ if __name__ == "__main__":
         proc = Process(target=startCustomerProcess, args=(customer, output, ))
         customer_processes.append(proc)
         proc.start()
-        # time.sleep(0.25)
 
     for proc in customer_processes:
         proc.join()

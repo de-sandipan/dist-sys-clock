@@ -6,9 +6,9 @@ from multiprocessing import Process, Queue
 import os
 import comm_service_pb2
 import comm_service_pb2_grpc
-import time
 import signal
-
+import distro
+import platform
 
 
 class ExitHandler:
@@ -22,16 +22,19 @@ class ExitHandler:
 
 def startBranchProcess(branch, output):
 
+    # This registers the exit handler. When a branch process is terminated
+    # the handler will ensure graceful termination of the process and 
+    # capture all the events for the branch in the 'output' queue
     signal.signal(signal.SIGTERM, ExitHandler(branch, output))
 
 
-    # Each process writes the process id in the file. This 
-    # file will be fetched when processing for all customers
-    # are completed and the processes will be terminated
+    # Each branch process will write the process id in the file. This file will be
+    # referred to terminate branch processes when all customer events are processed.
     with open('branch_process_ids.txt', 'a') as file_object:
         file_object.write(str(os.getpid()))
         file_object.write('\n')
 
+    # Create the branch processes and wait for customer events.
     branch.createBranchStub()
     port = str(50000 + branch.id)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
@@ -47,6 +50,20 @@ def startBranchProcess(branch, output):
 
 if __name__ == "__main__":
 
+    if platform.system() == 'Windows':
+        print('''
+              This application is not cross platform and can not be executed on
+              Windows. Please use a Linux based platform, preferably Ubuntu 22.04.
+              ''')
+        exit(0)
+
+    if distro.name() != 'Ubuntu' and distro.version() != '22.04':
+        print('''
+              This application is tested on Ubuntu 22.04.
+              Execution in other platforms may produce unintended outputs.
+              ''')
+
+    # This data structure will capture events generated for all branches
     output = Queue()
 
     with open('input.json') as f:
@@ -64,10 +81,11 @@ if __name__ == "__main__":
             branches.append(branch.id)
             branch_list.append(branch)
 
-    # Delete any previously present exection record
+    # Delete any files generated in previous execution
     try:
         os.remove('branch_process_ids.txt')
         os.remove('branch_event_logs.json')
+        os.remove('all_event_logs.json')
     except OSError:
         pass
     
@@ -80,6 +98,8 @@ if __name__ == "__main__":
     for proc in branch_processes:
         proc.join()
 
+
+    # Capture all the events for all branches and generate branch process log 
     branch_processes_log = [output.get() for p in branch_processes]
 
     json_object = json.dumps(branch_processes_log, indent=2)

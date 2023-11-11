@@ -14,7 +14,6 @@ class Customer:
         self.recvMsg = list()
         # pointer for the stub
         self.stub = None
-
         self.clock = 0
         self.eventLogs = list()
 
@@ -75,8 +74,8 @@ class Customer:
     def logEvents(self):
         
         log = {'id': self.id, 'type': 'customer', 'events': self.eventLogs}
-
         return log
+
 
     def writeEventIntoFile(self, eventLog):
         file_record = {'id': self.id, 
@@ -86,13 +85,7 @@ class Customer:
                        'interface': eventLog['interface'], 
                        'comment': eventLog['comment']}
         
-        # json_object = json.dumps([file_record], indent=2)
-        
         lock = FileLock("all_event_logs.json.lock")
-
-        # with lock:
-        #     with open('all_event_logs.json', 'a') as file_object:
-        #         file_object.write(json_object)
         
         with lock:
             with open('all_event_logs.json', 'r') as file_object:
